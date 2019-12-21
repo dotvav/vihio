@@ -1,0 +1,19 @@
+devices:
+  - name: Living room stove
+    hostname: 192.168.1.173
+mqtt_discovery_prefix: homeassistant
+mqtt_state_prefix: palazzetti/state
+mqtt_command_prefix: palazzetti/command
+mqtt_reset_topic: palazzetti/reset
+mqtt_host: 127.0.0.1
+mqtt_client_name: vihio
+#mqtt_username
+#mqtt_password
+
+refresh_delays:
+  - 2
+  - 5
+  - 10
+refresh_delay_randomness: 0
+
+logging_level: INFO
