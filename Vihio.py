@@ -16,6 +16,11 @@ class Device:
         self.device_id = device_id
         self.name = name
         self.hostname = hostname
+        self.discovery_topic = None
+        self.mqtt_config = None
+        self.target_temperature = None
+        self.temperature = None
+        self.mode = None
 
     def update_state(self, data):
         self.target_temperature = data["SETP"]
@@ -80,6 +85,7 @@ class Device:
             mqtt_client.publish(self.mqtt_config["mode_state_topic"], self.mode)
             mqtt_client.publish(self.mqtt_config["temperature_state_topic"], self.target_temperature)
 
+
 ################
 
 class Config:
@@ -122,16 +128,23 @@ class PalazzettiAdapter:
         self.session = requests.Session()
 
     def get_api(self, url, retry=1):
+        logging.debug("API call: %s", url)
         try:
             response = self.session.get(url=url, data=None, headers=None)
         except Exception as e:
             logging.warning(e)
             response = None
 
-        if (response is None or response.status_code != 200) and retry > 0:
-            time.sleep(self.delayer.next())
-            return self.get_api(url, retry - 1)
+        if response is None or response.status_code != 200:
+            if retry > 0:
+                logging.debug("API call failed. Retrying.")
+                time.sleep(self.delayer.next())
+                return self.get_api(url, retry - 1)
+            else:
+                logging.debug("API call failed. No more retry.")
+                return {}
         else:
+            logging.debug("API response: %s", response.text)
             return json.loads(response.text)
 
     def send_command(self, hostname, command):
