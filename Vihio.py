@@ -28,18 +28,17 @@ class Device:
         self.mode = "heat" if data["STATUS"] else "off"
 
     def update_mqtt_config(self):
-        sanitized_id = self.device_id.replace(':', '_')
-        self.discovery_topic = self.house.config.mqtt_discovery_prefix + "/climate/" + sanitized_id + "/config"
+        self.discovery_topic = self.house.config.mqtt_discovery_prefix + "/climate/" + self.device_id + "/config"
         self.mqtt_config = {
             "name": self.name,
             "unique_id": self.device_id,
 
-            "current_temperature_topic": self.house.config.mqtt_state_prefix + "/" + sanitized_id + "/temp",
-            "mode_state_topic": self.house.config.mqtt_state_prefix + "/" + sanitized_id + "/mode",
-            "temperature_state_topic": self.house.config.mqtt_state_prefix + "/" + sanitized_id + "/target_temp",
+            "current_temperature_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/temp",
+            "mode_state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/mode",
+            "temperature_state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/target_temp",
 
-            "mode_command_topic": self.house.config.mqtt_command_prefix + "/" + sanitized_id + "/mode",
-            "temperature_command_topic": self.house.config.mqtt_command_prefix + "/" + sanitized_id + "/target_temp",
+            "mode_command_topic": self.house.config.mqtt_command_prefix + "/" + self.device_id + "/mode",
+            "temperature_command_topic": self.house.config.mqtt_command_prefix + "/" + self.device_id + "/target_temp",
 
             "modes": ["off", "heat"],
             "device": {"identifiers": self.device_id, "manufacturer": "Palazzetti"}
@@ -220,7 +219,7 @@ class House:
     def refresh_all(self):
         for device_cfg in self.config.devices:
             raw_device = self.palazzetti.fetch_state(device_cfg["hostname"])
-            device_id = raw_device["DATA"]["MAC"]
+            device_id = raw_device["DATA"]["MAC"].replace(':', '_')
             if device_id in self.devices:
                 device = self.devices[device_id]
             else:
@@ -232,7 +231,7 @@ class House:
     def setup(self):
         for device_cfg in self.config.devices:
             raw_device = self.palazzetti.fetch_state(device_cfg["hostname"])
-            device_id = raw_device["DATA"]["MAC"]
+            device_id = raw_device["DATA"]["MAC"].replace(':', '_')
             if device_id in self.devices:
                 device = self.devices[device_id]
             else:
