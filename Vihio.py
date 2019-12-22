@@ -205,6 +205,7 @@ class House:
         return Config(raw_default_config)
 
     def register_all(self):
+        self.mqtt_client.subscribe(self.config.mqtt_reset_topic, 0)
         for device_id, device in self.devices.items():
             device.register_mqtt(True)
         self.mqtt_client.on_message = self.on_message
@@ -213,6 +214,7 @@ class House:
     def unregister_all(self):
         self.mqtt_client.on_message(None)
         self.mqtt_client.loop_stop()
+        self.mqtt_client.unsubscribe(self.config.mqtt_reset_topic, 0)
         for device_id, device in self.devices.items():
             device.unregister_mqtt(True)
 
@@ -240,7 +242,6 @@ class House:
             device.update_state(raw_device["DATA"])
             device.update_mqtt_config()
             logging.info("Device found: %s (%s | %s)", device.name, device.device_id, device.hostname)
-        self.mqtt_client.subscribe(self.config.mqtt_reset_topic, 0)
 
     def loop_start(self):
         self.setup()
