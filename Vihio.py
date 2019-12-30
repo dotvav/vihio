@@ -247,8 +247,8 @@ class House:
         self.setup()
         self.register_all()
         while True:
-            time.sleep(self.delayer.next())
             self.refresh_all()
+            time.sleep(self.delayer.next())
 
     def on_message(self, client, userdata, message):
         if message.topic == self.config.mqtt_reset_topic:
