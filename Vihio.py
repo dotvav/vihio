@@ -11,25 +11,70 @@ import yaml
 ################
 
 class Device:
+
+    # Based on the Android app mapping: https://pastebin.com/VQjYtzAn
+    status_names = {
+        0: "Off",
+        1: "Timer-regulated switch off",
+        10: "Switch off",
+        1000: "General error – See Manual",
+        1001: "General error – See Manual",
+        11: "Burn pot cleaning",
+        12: "Cooling in progress",
+        1239: "Door open",
+        1240: "Temperature too high",
+        1241: "Cleaning warning",
+        1243: "Fuel error – See Manual",
+        1244: "Pellet probe or return water error",
+        1245: "T05 error Disconnected or faulty probe",
+        1247: "Feed hatch or door open",
+        1248: "Safety pressure switch error",
+        1249: "Main probe failure",
+        1250: "Flue gas probe failure",
+        1252: "Too high exhaust gas temperature",
+        1253: "Pellets finished or Ignition failed",
+        1508: "General error – See Manual",
+        2: "Ignition test",
+        3: "Pellet feed",
+        4: "Ignition",
+        5: "Fuel check",
+        50: "Final cleaning",
+        501: "Off",
+        502: "Ignition",
+        503: "Fuel check",
+        504: "Operating",
+        505: "Firewood finished",
+        506: "Cooling",
+        507: "Burn pot cleaning",
+        51: "Ecomode",
+        6: "Operating",
+        7: "Operating - Modulating",
+        8: "-",
+        9: "Stand-By"
+    }
+    is_heating_statuses = [2, 3, 4, 5, 502, 503, 504, 51, 6, 7]
+
     def __init__(self, house, device_id, name, hostname):
         self.house = house
         self.device_id = device_id
         self.name = name
         self.hostname = hostname
-        self.discovery_topic = None
-        self.mqtt_config = None
+        self.climate_discovery_topic = None
+        self.climate_mqtt_config = None
         self.target_temperature = None
         self.temperature = None
+        self.status = None
         self.mode = None
 
     def update_state(self, data):
         self.target_temperature = data["SETP"]
         self.temperature = data["T1"]
-        self.mode = "heat" if data["STATUS"] else "off"
+        self.status = self.status_names.get(data["LSTATUS"], "Off")
+        self.mode = "heat" if data["LSTATUS"] in self.is_heating_statuses else "off"
 
     def update_mqtt_config(self):
-        self.discovery_topic = self.house.config.mqtt_discovery_prefix + "/climate/" + self.device_id + "/config"
-        self.mqtt_config = {
+        self.climate_discovery_topic = self.house.config.mqtt_discovery_prefix + "/climate/" + self.device_id + "/config"
+        self.climate_mqtt_config = {
             "name": self.name,
             "unique_id": self.device_id,
 
@@ -44,27 +89,34 @@ class Device:
             "device": {"identifiers": self.device_id, "manufacturer": "Palazzetti"}
         }
         self.topic_to_func = {
-            self.mqtt_config["mode_command_topic"]: self.send_mode,
-            self.mqtt_config["temperature_command_topic"]: self.send_target_temperature,
+            self.climate_mqtt_config["mode_command_topic"]: self.send_mode,
+            self.climate_mqtt_config["temperature_command_topic"]: self.send_target_temperature,
+        }
+        self.status_sensor_discovery_topic = self.house.config.mqtt_discovery_prefix + "/sensor/" + self.device_id + "/config"
+        self.status_sensor_mqtt_config = {
+            "name": self.name + " (status)",
+            "state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/status"
         }
 
     def register_mqtt(self, discovery):
         mqtt_client = self.house.mqtt_client
 
-        mqtt_client.subscribe(self.mqtt_config["mode_command_topic"], 0)
-        mqtt_client.subscribe(self.mqtt_config["temperature_command_topic"], 0)
+        mqtt_client.subscribe(self.climate_mqtt_config["mode_command_topic"], 0)
+        mqtt_client.subscribe(self.climate_mqtt_config["temperature_command_topic"], 0)
 
         if discovery:
-            mqtt_client.publish(self.discovery_topic, json.dumps(self.mqtt_config))
+            mqtt_client.publish(self.climate_discovery_topic, json.dumps(self.climate_mqtt_config), qos=1)
+            mqtt_client.publish(self.status_sensor_discovery_topic, json.dumps(self.status_sensor_mqtt_config), qos=1)
 
     def unregister_mqtt(self, discovery):
         mqtt_client = self.house.mqtt_client
 
-        mqtt_client.unsubscribe(self.mqtt_config["mode_command_topic"], 0)
-        mqtt_client.unsubscribe(self.mqtt_config["temperature_command_topic"], 0)
+        mqtt_client.unsubscribe(self.climate_mqtt_config["mode_command_topic"], 0)
+        mqtt_client.unsubscribe(self.climate_mqtt_config["temperature_command_topic"], 0)
 
         if discovery:
-            mqtt_client.publish(self.discovery_topic, None)
+            mqtt_client.publish(self.climate_discovery_topic, None)
+            mqtt_client.publish(self.status_sensor_discovery_topic, None)
 
     def on_message(self, topic, payload):
         func = self.topic_to_func.get(topic, None)
@@ -80,9 +132,10 @@ class Device:
     def publish_state(self):
         mqtt_client = self.house.mqtt_client
         if mqtt_client is not None:
-            mqtt_client.publish(self.mqtt_config["current_temperature_topic"], self.temperature)
-            mqtt_client.publish(self.mqtt_config["mode_state_topic"], self.mode)
-            mqtt_client.publish(self.mqtt_config["temperature_state_topic"], self.target_temperature)
+            mqtt_client.publish(self.climate_mqtt_config["current_temperature_topic"], self.temperature)
+            mqtt_client.publish(self.climate_mqtt_config["mode_state_topic"], self.mode)
+            mqtt_client.publish(self.climate_mqtt_config["temperature_state_topic"], self.target_temperature)
+            mqtt_client.publish(self.status_sensor_mqtt_config["state_topic"], self.status)
 
 
 ################
