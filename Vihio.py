@@ -116,17 +116,20 @@ class Device:
         self.exit_temp_sensor_mqtt_config = {
             "name": self.name + " (exit temperature)",
             "device_class": "temperature",
+            "unit_of_measurement": "°C",
             "state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/exit_temp"
         }
         self.fumes_temp_sensor_discovery_topic = self.house.config.mqtt_discovery_prefix + "/sensor/" + self.device_id + "_fumes_temp/config"
         self.fumes_temp_sensor_mqtt_config = {
             "name": self.name + " (fumes temperature)",
             "device_class": "temperature",
+            "unit_of_measurement": "°C",
             "state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/fumes_temp"
         }
         self.pellet_qty_sensor_discovery_topic = self.house.config.mqtt_discovery_prefix + "/sensor/" + self.device_id + "_pellet_qty/config"
         self.pellet_qty_sensor_mqtt_config = {
             "name": self.name + " (pellet quantity)",
+            "unit_of_measurement": "kg",
             "state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/pellet_qty"
         }
 
