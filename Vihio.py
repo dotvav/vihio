@@ -116,20 +116,20 @@ class Device:
         self.exit_temp_sensor_mqtt_config = {
             "name": self.name + " (exit temperature)",
             "device_class": "temperature",
-            "unit_of_measurement": "°C",
+            "unit_of_measurement": self.house.config.temperature_unit,
             "state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/exit_temp"
         }
         self.fumes_temp_sensor_discovery_topic = self.house.config.mqtt_discovery_prefix + "/sensor/" + self.device_id + "_fumes_temp/config"
         self.fumes_temp_sensor_mqtt_config = {
             "name": self.name + " (fumes temperature)",
             "device_class": "temperature",
-            "unit_of_measurement": "°C",
+            "unit_of_measurement": self.house.config.temperature_unit,
             "state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/fumes_temp"
         }
         self.pellet_qty_sensor_discovery_topic = self.house.config.mqtt_discovery_prefix + "/sensor/" + self.device_id + "_pellet_qty/config"
         self.pellet_qty_sensor_mqtt_config = {
             "name": self.name + " (pellet quantity)",
-            "unit_of_measurement": "kg",
+            "unit_of_measurement": self.house.config.pellet_quantity_unit,
             "state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/pellet_qty"
         }
 
@@ -199,6 +199,8 @@ class Config:
     logging_level = "INFO"
     refresh_delays = [3, 5, 10, 30]
     refresh_delay_randomness = 2
+    temperature_unit = "°C"
+    pellet_quantity_unit = "kg"
 
     def __init__(self, raw):
         self.devices = raw.get("devices")
@@ -214,6 +216,8 @@ class Config:
         self.logging_level = raw.get("logging_level", self.logging_level)
         self.refresh_delays = raw.get("refresh_delays", self.refresh_delays)
         self.refresh_delay_randomness = raw.get("refresh_delay_randomness", self.refresh_delay_randomness)
+        self.temperature_unit = raw.get("temperature_unit",self.temperature_unit)
+        self.pellet_quantity_unit = raw.get("pellet_quantity_unit", self.pellet_quantity_unit)
 
 
 ################
@@ -289,11 +293,11 @@ class House:
 
     @staticmethod
     def read_config():
-        with open("config/default.yml", 'r') as yml_file:
+        with open("config/default.yml", 'r', encoding="utf-8") as yml_file:
             raw_default_config = yaml.safe_load(yml_file)
 
         try:
-            with open("config/local.yml", 'r') as yml_file:
+            with open("config/local.yml", 'r', encoding="utf-8") as yml_file:
                 raw_local_config = yaml.safe_load(yml_file)
                 raw_default_config.update(raw_local_config)
         except IOError:

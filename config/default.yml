@@ -10,6 +10,9 @@ mqtt_client_name: vihio
 #mqtt_username
 #mqtt_password
 
+temperature_unit: °C
+pellet_quantity_unit: kg
+
 refresh_delays:
   - 2
   - 5
