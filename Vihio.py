@@ -319,28 +319,30 @@ class House:
             device.unregister_mqtt(True)
         self.mqtt_client.loop_stop()
 
-    def refresh_all(self):
+    def update_all_states(self):
         for device_cfg in self.config.devices:
             raw_device = self.palazzetti.fetch_state(device_cfg["hostname"])
-            device_id = raw_device["DATA"]["MAC"].replace(':', '_')
+            try:
+                device_id = raw_device["DATA"]["MAC"].replace(':', '_')
+            except KeyError:
+                logging.error("Device response payload is missing a MAC identifier")
+                logging.debug("Payload received: %s", json.dumps(raw_device))
+                return
             if device_id in self.devices:
                 device = self.devices[device_id]
             else:
                 device = Device(self, device_id,  device_cfg["name"], device_cfg["hostname"])
                 self.devices[device.device_id] = device
             device.update_state(raw_device["DATA"])
+
+    def refresh_all(self):
+        self.update_all_states()
+        for device in self.devices.values():
             device.publish_state()
 
     def setup(self):
-        for device_cfg in self.config.devices:
-            raw_device = self.palazzetti.fetch_state(device_cfg["hostname"])
-            device_id = raw_device["DATA"]["MAC"].replace(':', '_')
-            if device_id in self.devices:
-                device = self.devices[device_id]
-            else:
-                device = Device(self, device_id, device_cfg["name"], device_cfg["hostname"])
-                self.devices[device.device_id] = device
-            device.update_state(raw_device["DATA"])
+        self.update_all_states()
+        for device in self.devices.values():
             device.update_mqtt_config()
             logging.info("Device found: %s (%s | %s)", device.name, device.device_id, device.hostname)
 
