@@ -140,11 +140,11 @@ class Device:
         mqtt_client.subscribe(self.climate_mqtt_config["temperature_command_topic"], 0)
 
         if discovery:
-            mqtt_client.publish(self.climate_discovery_topic, json.dumps(self.climate_mqtt_config), qos=1)
-            mqtt_client.publish(self.status_sensor_discovery_topic, json.dumps(self.status_sensor_mqtt_config), qos=1)
-            mqtt_client.publish(self.exit_temp_sensor_discovery_topic, json.dumps(self.exit_temp_sensor_mqtt_config), qos=1)
-            mqtt_client.publish(self.fumes_temp_sensor_discovery_topic, json.dumps(self.fumes_temp_sensor_mqtt_config), qos=1)
-            mqtt_client.publish(self.pellet_qty_sensor_discovery_topic, json.dumps(self.pellet_qty_sensor_mqtt_config), qos=1)
+            mqtt_client.publish(self.climate_discovery_topic, json.dumps(self.climate_mqtt_config), qos=, retain=True)
+            mqtt_client.publish(self.status_sensor_discovery_topic, json.dumps(self.status_sensor_mqtt_config), qos=1, retain=True)
+            mqtt_client.publish(self.exit_temp_sensor_discovery_topic, json.dumps(self.exit_temp_sensor_mqtt_config), qos=1, retain=True)
+            mqtt_client.publish(self.fumes_temp_sensor_discovery_topic, json.dumps(self.fumes_temp_sensor_mqtt_config), qos=1, retain=True)
+            mqtt_client.publish(self.pellet_qty_sensor_discovery_topic, json.dumps(self.pellet_qty_sensor_mqtt_config), qos=1, retain=True)
 
     def unregister_mqtt(self, discovery):
         mqtt_client = self.house.mqtt_client
@@ -153,11 +153,11 @@ class Device:
         mqtt_client.unsubscribe(self.climate_mqtt_config["temperature_command_topic"], 0)
 
         if discovery:
-            mqtt_client.publish(self.climate_discovery_topic, None, qos=1)
-            mqtt_client.publish(self.status_sensor_discovery_topic, None, qos=1)
-            mqtt_client.publish(self.exit_temp_sensor_discovery_topic, None, qos=1)
-            mqtt_client.publish(self.fumes_temp_sensor_discovery_topic, None, qos=1)
-            mqtt_client.publish(self.pellet_qty_sensor_discovery_topic, None, qos=1)
+            mqtt_client.publish(self.climate_discovery_topic, None, qos=1, retain=True)
+            mqtt_client.publish(self.status_sensor_discovery_topic, None, qos=1, retain=True)
+            mqtt_client.publish(self.exit_temp_sensor_discovery_topic, None, qos=1, retain=True)
+            mqtt_client.publish(self.fumes_temp_sensor_discovery_topic, None, qos=1, retain=True)
+            mqtt_client.publish(self.pellet_qty_sensor_discovery_topic, None, qos=1, retain=True)
 
     def on_message(self, topic, payload):
         func = self.topic_to_func.get(topic, None)
@@ -173,13 +173,13 @@ class Device:
     def publish_state(self):
         mqtt_client = self.house.mqtt_client
         if mqtt_client is not None:
-            mqtt_client.publish(self.climate_mqtt_config["current_temperature_topic"], self.room_temperature)
-            mqtt_client.publish(self.climate_mqtt_config["mode_state_topic"], self.mode)
-            mqtt_client.publish(self.climate_mqtt_config["temperature_state_topic"], self.target_temperature)
-            mqtt_client.publish(self.status_sensor_mqtt_config["state_topic"], self.status)
-            mqtt_client.publish(self.exit_temp_sensor_mqtt_config["state_topic"], self.exit_temperature)
-            mqtt_client.publish(self.fumes_temp_sensor_mqtt_config["state_topic"], self.fumes_temperature)
-            mqtt_client.publish(self.pellet_qty_sensor_mqtt_config["state_topic"], self.pellet_quantity)
+            mqtt_client.publish(self.climate_mqtt_config["current_temperature_topic"], self.room_temperature, retain=True)
+            mqtt_client.publish(self.climate_mqtt_config["mode_state_topic"], self.mode, retain=True)
+            mqtt_client.publish(self.climate_mqtt_config["temperature_state_topic"], self.target_temperature, retain=True)
+            mqtt_client.publish(self.status_sensor_mqtt_config["state_topic"], self.status, retain=True)
+            mqtt_client.publish(self.exit_temp_sensor_mqtt_config["state_topic"], self.exit_temperature, retain=True)
+            mqtt_client.publish(self.fumes_temp_sensor_mqtt_config["state_topic"], self.fumes_temperature, retain=True)
+            mqtt_client.publish(self.pellet_qty_sensor_mqtt_config["state_topic"], self.pellet_quantity, retain=True)
 
 
 ################
