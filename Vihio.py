@@ -140,7 +140,7 @@ class Device:
         mqtt_client.subscribe(self.climate_mqtt_config["temperature_command_topic"], 0)
 
         if discovery:
-            mqtt_client.publish(self.climate_discovery_topic, json.dumps(self.climate_mqtt_config), qos=, retain=True)
+            mqtt_client.publish(self.climate_discovery_topic, json.dumps(self.climate_mqtt_config), qos=1, retain=True)
             mqtt_client.publish(self.status_sensor_discovery_topic, json.dumps(self.status_sensor_mqtt_config), qos=1, retain=True)
             mqtt_client.publish(self.exit_temp_sensor_discovery_topic, json.dumps(self.exit_temp_sensor_mqtt_config), qos=1, retain=True)
             mqtt_client.publish(self.fumes_temp_sensor_discovery_topic, json.dumps(self.fumes_temp_sensor_mqtt_config), qos=1, retain=True)
