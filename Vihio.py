@@ -237,11 +237,11 @@ class PalazzettiAdapter:
 
         if response is None or response.status_code != 200:
             if retry > 0:
-                logging.debug("API call failed. Retrying.")
+                logging.debug("API call failed with status code {}. Retrying.", response.status_code)
                 time.sleep(self.delayer.next())
                 return self.get_api(url, retry - 1)
             else:
-                logging.debug("API call failed. No more retry.")
+                logging.debug("API call failed with status code {}. No more retry.", response.status_code)
                 return {}
         else:
             logging.debug("API response: %s", response.text)
