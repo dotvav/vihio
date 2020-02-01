@@ -78,6 +78,30 @@ class Device:
         self.mode = None
         self.topic_to_func = None
 
+    def __str__(self):
+        return json.dumps({
+            'name': self.name,
+            'hostname': self.hostname,
+            'climate_discovery_topic': self.climate_discovery_topic,
+            'climate_mqtt_config': self.climate_mqtt_config,
+            'status_sensor_discovery_topic': self.status_sensor_discovery_topic,
+            'status_sensor_mqtt_config': self.status_sensor_mqtt_config,
+            'exit_temp_sensor_discovery_topic': self.exit_temp_sensor_discovery_topic,
+            'exit_temp_sensor_mqtt_config': self.exit_temp_sensor_mqtt_config,
+            'fumes_temp_sensor_discovery_topic': self.fumes_temp_sensor_discovery_topic,
+            'fumes_temp_sensor_mqtt_config': self.fumes_temp_sensor_mqtt_config,
+            'pellet_qty_sensor_discovery_topic': self.pellet_qty_sensor_discovery_topic,
+            'pellet_qty_sensor_mqtt_config': self.pellet_qty_sensor_mqtt_config,
+            'target_temperature': self.target_temperature,
+            'room_temperature': self.room_temperature,
+            'exit_temperature': self.exit_temperature,
+            'fumes_temperature': self.fumes_temperature,
+            'pellet_quantity': self.pellet_quantity,
+            'status': self.status,
+            'mode': self.mode
+        })
+
+
     def update_state(self, data):
         self.target_temperature = data["SETP"]
         self.room_temperature = data["T1"]
@@ -325,20 +349,29 @@ class House:
         self.mqtt_client.loop_stop()
 
     def update_all_states(self):
+        logging.debug("update_all_states: begin")
+        logging.debug("devices at beginning: %s", str(self.devices))
         for device_cfg in self.config.devices:
+            logging.debug("update_all_states: %s begin", device_cfg["hostname"])
             raw_device = self.palazzetti.fetch_state(device_cfg["hostname"])
+            logging.debug("update_all_states: raw_device %s", json.dumps(raw_device))
             try:
                 device_id = raw_device["DATA"]["MAC"].replace(':', '_')
             except KeyError:
-                logging.error("Device response payload is missing a MAC identifier")
                 logging.debug("Payload received: %s", json.dumps(raw_device))
+                logging.error("Device response payload is missing a MAC identifier")
                 return
+            logging.debug("update_all_states: device_id %s", device_id)
             if device_id in self.devices:
                 device = self.devices[device_id]
             else:
                 device = Device(self, device_id,  device_cfg["name"], device_cfg["hostname"])
                 self.devices[device.device_id] = device
+            logging.debug("device before update: %s", str(device))
             device.update_state(raw_device["DATA"])
+            logging.debug("device after update: %s", str(device))
+        logging.debug("devices at end: %s", str(self.devices))
+        logging.debug("update_all_states: end")
 
     def refresh_all(self):
         self.update_all_states()
