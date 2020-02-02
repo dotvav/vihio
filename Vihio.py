@@ -266,11 +266,11 @@ class PalazzettiAdapter:
 
         if status_code != 200:
             if retry > 0:
-                logging.debug("API call failed with status code {}. Retrying.", status_code)
+                logging.debug("API call failed with status code %s. Retrying.", status_code)
                 time.sleep(self.delayer.next())
                 return self.get_api(url, retry - 1)
             else:
-                logging.debug("API call failed with status code {}. No more retry.", status_code)
+                logging.debug("API call failed with status code %s. No more retry.", status_code)
                 return {}
         else:
             logging.debug("API response: %s", response.text)
@@ -403,7 +403,7 @@ class House:
         device_id = topic_tokens[len(topic_tokens) - 2]
         command = topic_tokens[len(topic_tokens) - 1]
         value = str(message.payload.decode("utf-8"))
-        logging.info("MQTT message received device '" + device_id + "' command '" + command + "' value '" + value + "'")
+        logging.info("MQTT message received device '%s' command '%s' value '%s'", device_id, command, value)
 
         device = self.devices.get(device_id, None)
         if device is not None:
