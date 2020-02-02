@@ -254,7 +254,7 @@ class PalazzettiAdapter:
     def get_api(self, url, retry=1):
         logging.debug("API call: %s", url)
         try:
-            response = self.session.get(url=url, data=None, headers=None)
+            response = self.session.get(url=url, data=None, headers=None, timeout=(2, 2))
         except Exception as e:
             logging.warning(e)
             response = None
