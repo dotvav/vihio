@@ -21,5 +21,6 @@ refresh_delays:
   - 5
   - 10
 refresh_delay_randomness: 0
+offline_timeout: 120
 
 logging_level: INFO

@@ -77,6 +77,8 @@ class Device:
         self.status = None
         self.mode = None
         self.topic_to_func = None
+        self.availability = "offline"
+        self.last_update = 0
 
     def __str__(self):
         return json.dumps({
@@ -101,7 +103,6 @@ class Device:
             'mode': self.mode
         })
 
-
     def update_state(self, data):
         self.target_temperature = data["SETP"]
         self.room_temperature = data["T1"]
@@ -110,6 +111,11 @@ class Device:
         self.pellet_quantity = float(data["PQT"])
         self.status = self.status_names.get(data["LSTATUS"], "Off")
         self.mode = "heat" if data["LSTATUS"] in self.is_heating_statuses else "off"
+        if time.time() - self.last_update < self.house.config.offline_timeout:
+            self.availability = "online"
+        else:
+            self.availability = "offline"
+        self.last_update = time.time()
 
     def update_mqtt_config(self):
         self.climate_discovery_topic = self.house.config.mqtt_discovery_prefix + "/climate/" + self.device_id + "/config"
@@ -120,6 +126,7 @@ class Device:
             "current_temperature_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/temp",
             "mode_state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/mode",
             "temperature_state_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/target_temp",
+            "availability_topic": self.house.config.mqtt_state_prefix + "/" + self.device_id + "/availability",
 
             "mode_command_topic": self.house.config.mqtt_command_prefix + "/" + self.device_id + "/mode",
             "temperature_command_topic": self.house.config.mqtt_command_prefix + "/" + self.device_id + "/target_temp",
@@ -211,6 +218,8 @@ class Device:
                                 self.mode, retain=retain)
             mqtt_client.publish(self.climate_mqtt_config["temperature_state_topic"],
                                 self.target_temperature, retain=retain)
+            mqtt_client.publish(self.climate_mqtt_config["availability_topic"],
+                                self.availability, retain=retain)
             mqtt_client.publish(self.status_sensor_mqtt_config["state_topic"],
                                 self.status, retain=retain)
             mqtt_client.publish(self.exit_temp_sensor_mqtt_config["state_topic"],
@@ -241,6 +250,7 @@ class Config:
     logging_level = "INFO"
     refresh_delays = [3, 5, 10, 30]
     refresh_delay_randomness = 2
+    offline_timeout = 120
     temperature_unit = "°C"
     pellet_quantity_unit = "kg"
 
@@ -261,6 +271,7 @@ class Config:
         self.logging_level = raw.get("logging_level", self.logging_level)
         self.refresh_delays = raw.get("refresh_delays", self.refresh_delays)
         self.refresh_delay_randomness = raw.get("refresh_delay_randomness", self.refresh_delay_randomness)
+        self.offline_timeout = raw.get("offline_timeout", self.offline_timeout)
         self.temperature_unit = raw.get("temperature_unit",self.temperature_unit)
         self.pellet_quantity_unit = raw.get("pellet_quantity_unit", self.pellet_quantity_unit)
 
@@ -268,6 +279,8 @@ class Config:
 ################
 
 class PalazzettiAdapter:
+    last_successful_response = 0
+
     def __init__(self):
         self.delayer = Delayer([1], 2)
         self.session = requests.Session()
@@ -295,6 +308,7 @@ class PalazzettiAdapter:
                 return {}
         else:
             logging.debug("API response: %s", response.text)
+            self.last_successful_response = time.time()
             return json.loads(response.text)
 
     def send_command(self, hostname, command):
@@ -309,6 +323,8 @@ class PalazzettiAdapter:
     def set_target_temperature(self, hostname, target_temperature):
         return self.send_command(hostname, "SET SETP {}".format(target_temperature))
 
+    def last_successful_response_age(self):
+        return time.time() - self.last_successful_response
 
 ################
 
