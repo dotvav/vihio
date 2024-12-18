@@ -2,7 +2,7 @@
 
 Hi, 
 
-This project is not maintained anymore. I have decided to create a core integration in Home Assistant. It was made available in HA 2024.11. The Home Assistant integration is based on the API library https://github.com/dotvav/py-palazzetti-api/.
+This project is not maintained anymore. I have decided to create a core integration in Home Assistant. It was made available in HA 2024.11. I am maintaining the python API client lib underlying the The Home Assistant integration here: https://github.com/dotvav/py-palazzetti-api/.
 
 Cheers!
 
