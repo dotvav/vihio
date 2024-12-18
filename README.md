@@ -2,7 +2,7 @@
 
 Hi, 
 
-As of today (2024-11-05), this bridge is still working fine despite not being actively worked on. Instead of adding new features to it, I have decided to create a native integration in Home Assistant. It should be available with Home Assistant 2024.11. There is n't feature parity yet, but I will be working on it (the integration is missing temperature and pellet quantity sensors but it has fan speed control). The Home Assistant integration is based on the API library https://github.com/dotvav/py-palazzetti-api/.
+This project is not maintained anymore. I have decided to create a core integration in Home Assistant. It was made available in HA 2024.11. The Home Assistant integration is based on the API library https://github.com/dotvav/py-palazzetti-api/.
 
 Cheers!
 
